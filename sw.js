@@ -1,5 +1,5 @@
 const CACHE_NAME = "signal-monitor-v1";
-const ASSETS = ["./", "./index.html", "./manifest.json"];
+const ASSETS = ["./", "./index.html", "./manifest.json", "./coi.mp3"];
 
 self.addEventListener("install", (event) => {
     event.waitUntil(

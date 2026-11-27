@@ -484,35 +484,60 @@
             }
         }
 
+        // Đặt đường dẫn tới file âm thanh bạn đã tải lên GitHub
+        const CUSTOM_SOUND_URL = "./alarm.mp3";
+        const alertAudio = new Audio(CUSTOM_SOUND_URL);
+        alertAudio.preload = "auto";
+
         function unlockAudio() {
             try {
-                audioCtx = audioCtx || new(window.AudioContext || window.webkitAudioContext)();
-                if (audioCtx.state === "suspended") audioCtx.resume();
-                playAlertFeedback(true);
-                addLog("Đã kích hoạt âm thanh cảnh báo.");
-            } catch (e) {}
+                // Phát thử 1 nhịp ngắn rồi dừng để mở khóa quyền âm thanh trên điện thoại/trình duyệt
+                alertAudio.volume = 0.2;
+                alertAudio.currentTime = 0;
+                const playPromise = alertAudio.play();
+                if (playPromise && typeof playPromise.then === "function") {
+                    playPromise.then(() => {
+                        setTimeout(() => {
+                            alertAudio.pause();
+                            alertAudio.currentTime = 0;
+                            alertAudio.volume = 1.0;
+                        }, 250);
+                    }).catch(() => {});
+                }
+
+                if (document.getElementById("vibrateToggle").checked && "vibrate" in navigator) {
+                    navigator.vibrate([250, 120, 250]);
+                }
+                addLog("Đã kích hoạt file âm báo tùy chỉnh.");
+            } catch (e) {
+                addLog("Không thể kích hoạt âm báo: " + e.message);
+            }
         }
 
         function playAlertFeedback(testOnly = false) {
             if (document.getElementById("vibrateToggle").checked && "vibrate" in navigator) {
-                navigator.vibrate(testOnly ? [100] : [300, 150, 300, 150, 400]);
+                if (testOnly) {
+                    navigator.vibrate([250, 120, 250]);
+                } else {
+                    navigator.vibrate([700, 200, 700, 200, 700, 200, 900]);
+                }
             }
 
             if (!document.getElementById("soundToggle").checked) return;
-            try {
-                audioCtx = audioCtx || new(window.AudioContext || window.webkitAudioContext)();
-                if (audioCtx.state === "suspended") audioCtx.resume();
 
-                const osc = audioCtx.createOscillator();
-                const gain = audioCtx.createGain();
-                osc.type = "triangle";
-                osc.frequency.value = testOnly ? 660 : 920;
-                gain.gain.value = 0.14;
-                osc.connect(gain);
-                gain.connect(audioCtx.destination);
-                osc.start();
-                osc.stop(audioCtx.currentTime + (testOnly ? 0.12 : 0.35));
-            } catch (e) {}
+            try {
+                alertAudio.pause();
+                alertAudio.currentTime = 0;
+                alertAudio.volume = 1.0;
+                const playPromise = alertAudio.play();
+                if (playPromise && typeof playPromise.catch === "function") {
+                    playPromise.catch((err) => {
+                        addLog("Trình duyệt chặn phát âm thanh (hãy chạm Test loa/rung trước): " + err.message);
+                    });
+                }
+            } catch (e) {
+                addLog("Lỗi phát file âm báo: " + e.message);
+            }
         }
 
         function addLog(text) {
