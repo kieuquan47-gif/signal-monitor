@@ -1,0 +1,713 @@
+<!DOCTYPE html>
+<html lang="vi">
+
+<head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover" />
+    <meta name="theme-color" content="#0f172a" />
+
+    <!-- Hỗ trợ cài đặt trên iOS (iPhone / iPad) -->
+    <meta name="apple-mobile-web-app-capable" content="yes" />
+    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
+    <meta name="apple-mobile-web-app-title" content="Giám Sát Tín Hiệu" />
+    <link rel="apple-touch-icon" href="icon-192.png" />
+
+    <!-- Manifest cho Android & Máy tính (Chrome/Edge) -->
+    <link rel="manifest" href="manifest.json" />
+    <title>Giám Sát Tín Hiệu Đa Thiết Bị</title>
+
+    <style>
+         :root {
+            --bg: #0f172a;
+            --card: #1e293b;
+            --card-inner: #0f172a;
+            --text: #f8fafc;
+            --muted: #94a3b8;
+            --green: #22c55e;
+            --red: #ef4444;
+            --border: #334155;
+        }
+        
+        * {
+            box-sizing: border-box;
+            -webkit-tap-highlight-color: transparent;
+            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+        }
+        
+        body {
+            margin: 0;
+            padding: calc(16px + env(safe-area-inset-top)) 16px calc(24px + env(safe-area-inset-bottom));
+            background: var(--bg);
+            color: var(--text);
+            min-height: 100vh;
+        }
+        
+        .container {
+            max-width: 960px;
+            margin: 0 auto;
+        }
+        
+        .topbar {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            gap: 12px;
+            margin-bottom: 16px;
+            flex-wrap: wrap;
+        }
+        
+        .topbar h1 {
+            font-size: 20px;
+            margin: 0;
+        }
+        
+        .badge-group {
+            display: flex;
+            gap: 8px;
+            align-items: center;
+        }
+        
+        .badge {
+            font-size: 12px;
+            padding: 6px 12px;
+            border-radius: 999px;
+            background: var(--card);
+            border: 1px solid var(--border);
+            color: var(--muted);
+        }
+        
+        .alert-banner {
+            display: none;
+            padding: 14px 16px;
+            border-radius: 12px;
+            background: rgba(239, 68, 68, 0.22);
+            border: 1px solid var(--red);
+            color: #fecaca;
+            font-weight: 700;
+            font-size: 15px;
+            margin-bottom: 16px;
+            line-height: 1.4;
+        }
+        
+        .alert-banner.active {
+            display: block;
+        }
+        /* Bố cục tự co giãn: 1 cột trên điện thoại, 2 cột trên máy tính */
+        
+        .layout-grid {
+            display: grid;
+            grid-template-columns: 1fr;
+            gap: 16px;
+        }
+        
+        @media (min-width: 768px) {
+            .layout-grid {
+                grid-template-columns: 1.4fr 1fr;
+                align-items: start;
+            }
+        }
+        
+        .panel {
+            background: var(--card);
+            border: 1px solid var(--border);
+            border-radius: 16px;
+            padding: 18px;
+        }
+        
+        .status-hero {
+            display: flex;
+            align-items: center;
+            gap: 16px;
+            padding-bottom: 16px;
+            border-bottom: 1px solid var(--border);
+        }
+        
+        .led {
+            width: 36px;
+            height: 36px;
+            border-radius: 50%;
+            flex-shrink: 0;
+        }
+        
+        .led.green {
+            background: var(--green);
+            box-shadow: 0 0 18px var(--green);
+        }
+        
+        .led.red-blink {
+            background: var(--red);
+            box-shadow: 0 0 24px var(--red);
+            animation: blinkRed 0.65s infinite;
+        }
+        
+        @keyframes blinkRed {
+            0%,
+            100% {
+                opacity: 1;
+                transform: scale(1);
+            }
+            50% {
+                opacity: 0.2;
+                transform: scale(0.9);
+            }
+        }
+        
+        .status-title {
+            font-size: 18px;
+            font-weight: 700;
+        }
+        
+        .status-sub {
+            color: var(--muted);
+            font-size: 13px;
+            margin-top: 4px;
+        }
+        
+        .section-label {
+            font-size: 12px;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+            color: var(--muted);
+            margin: 16px 0 8px;
+            font-weight: 700;
+        }
+        
+        .controls-grid {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 10px;
+        }
+        
+        .full-row {
+            grid-column: 1 / -1;
+        }
+        
+        select,
+        input,
+        button {
+            width: 100%;
+            min-height: 44px;
+            padding: 10px 12px;
+            border-radius: 10px;
+            border: 1px solid var(--border);
+            background: var(--card-inner);
+            color: var(--text);
+            font-size: 14px;
+        }
+        
+        button {
+            font-weight: 700;
+            cursor: pointer;
+            transition: opacity 0.15s, transform 0.1s;
+        }
+        
+        button:hover {
+            opacity: 0.92;
+        }
+        
+        button:active {
+            transform: scale(0.98);
+        }
+        
+        button.btn-lost {
+            background: #b91c1c;
+            border-color: #ef4444;
+        }
+        
+        button.btn-ok {
+            background: #15803d;
+            border-color: #22c55e;
+        }
+        
+        button.btn-primary {
+            background: #2563eb;
+            border-color: #3b82f6;
+        }
+        
+        .toggles {
+            display: flex;
+            flex-wrap: wrap;
+            justify-content: space-between;
+            align-items: center;
+            gap: 10px;
+            margin-top: 12px;
+            font-size: 13px;
+            color: var(--muted);
+        }
+        
+        .toggles label {
+            display: flex;
+            align-items: center;
+            gap: 6px;
+            cursor: pointer;
+        }
+        
+        .toggles input[type="checkbox"] {
+            width: 18px;
+            height: 18px;
+            min-height: auto;
+        }
+        
+        .machine-list {
+            display: grid;
+            grid-template-columns: 1fr;
+            gap: 10px;
+            margin-top: 14px;
+        }
+        
+        @media (min-width: 520px) {
+            .machine-list {
+                grid-template-columns: 1fr 1fr;
+            }
+        }
+        
+        .machine-card {
+            background: var(--card-inner);
+            border: 1px solid var(--border);
+            border-radius: 12px;
+            padding: 13px;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            gap: 10px;
+        }
+        
+        .machine-card.lost {
+            border-color: var(--red);
+            background: rgba(127, 29, 29, 0.25);
+        }
+        
+        .mini-led {
+            width: 16px;
+            height: 16px;
+            border-radius: 50%;
+            flex-shrink: 0;
+        }
+        
+        .mini-led.green {
+            background: var(--green);
+            box-shadow: 0 0 10px var(--green);
+        }
+        
+        .mini-led.red-blink {
+            background: var(--red);
+            box-shadow: 0 0 12px var(--red);
+            animation: blinkRed 0.65s infinite;
+        }
+        
+        .log {
+            background: #0b1120;
+            border: 1px solid var(--border);
+            border-radius: 10px;
+            padding: 12px;
+            height: 360px;
+            overflow-y: auto;
+            font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
+            font-size: 12.5px;
+            line-height: 1.55;
+        }
+    </style>
+</head>
+
+<body>
+    <div class="container">
+        <div class="topbar">
+            <h1>Giám Sát Tín Hiệu Từ Xa</h1>
+            <div class="badge-group">
+                <span class="badge" id="deviceBadge">Thiết bị: Đang nhận diện</span>
+                <span class="badge" id="connBadge">Chờ kết nối</span>
+            </div>
+        </div>
+
+        <div id="alertBanner" class="alert-banner"></div>
+
+        <div class="layout-grid">
+            <!-- Cột chính: Đèn báo & Điều khiển -->
+            <div class="panel">
+                <div class="status-hero">
+                    <div id="mainLed" class="led green"></div>
+                    <div>
+                        <div id="mainTitle" class="status-title">ĐÃ CÓ TÍN HIỆU</div>
+                        <div id="mainSub" class="status-sub">Tất cả máy nơi khác đang hoạt động bình thường.</div>
+                    </div>
+                </div>
+
+                <div class="section-label">1. Kết nối dữ liệu thật (Máy tính & Điện thoại)</div>
+                <div class="controls-grid">
+                    <input id="apiUrlInput" class="full-row" type="url" placeholder="https://server-cua-ban.com/api/signal-status" />
+                    <button class="btn-primary full-row" id="apiBtn" onclick="toggleApiPolling()">Bật nhận dữ liệu từ Server</button>
+                    <button id="serialBtn" class="full-row" style="display:none;" onclick="connectSerialPort()">Kết nối cổng USB / Serial (Chỉ máy tính)</button>
+                </div>
+
+                <div class="section-label">2. Giả lập báo cáo từ máy nơi khác</div>
+                <div class="controls-grid">
+                    <select id="machineSelect" class="full-row">
+            <option value="May A1">May A1</option>
+            <option value="May A2">May A2</option>
+            <option value="May A3">May A3</option>
+            <option value="May A4">May A4</option>
+            <option value="May A5">May A5</option>
+            <option value="May A6">May A6</option>
+            <option value="May A7">May A7</option>
+            <option value="May A8">May A8</option>
+            <option value="May A9">May A9</option>
+            <option value="May A10">May A10</option>
+            <option value="May A11">May A11</option>
+            <option value="May A12">May A12</option>
+            <option value="May A13">May A13</option>
+            <option value="May A14">May A14</option>
+            <option value="May A15">May A15</option>
+          </select>
+                    <button class="btn-lost" onclick="receiveReportFromRemote('LOST')">Báo MẤT tín hiệu</button>
+                    <button class="btn-ok" onclick="receiveReportFromRemote('OK')">Báo CÓ tín hiệu</button>
+                </div>
+
+                <div class="toggles">
+                    <label><input type="checkbox" id="soundToggle" checked /> Chuông báo</label>
+                    <label><input type="checkbox" id="vibrateToggle" checked /> Rung (Android)</label>
+                    <button style="width:auto;min-height:36px;padding:6px 12px;font-size:12px;" onclick="unlockAudio()">Test loa / rung</button>
+                </div>
+
+                <div class="section-label">3. Danh sách máy đang theo dõi</div>
+                <div class="machine-list" id="machineList"></div>
+            </div>
+
+            <!-- Cột nhật ký -->
+            <div class="panel">
+                <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:10px;">
+                    <span style="font-weight:700;font-size:15px;">Nhật ký sự kiện</span>
+                    <button style="width:auto;min-height:32px;padding:4px 10px;font-size:12px;" onclick="clearLogs()">Xóa log</button>
+                </div>
+                <div class="log" id="logBox"></div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        const TIMEOUT_MS = 15000;
+        let audioCtx = null;
+        let pollTimer = null;
+
+        const machines = {
+            "May A1": {
+                name: "May A1",
+                signalOk: true,
+                lastReport: Date.now()
+            },
+            "May A2": {
+                name: "May A2",
+                signalOk: true,
+                lastReport: Date.now()
+            },
+            "May A3": {
+                name: "May A3",
+                signalOk: true,
+                lastReport: Date.now()
+            },
+            "May A4": {
+                name: "May A4",
+                signalOk: true,
+                lastReport: Date.now()
+            },
+            "May A5": {
+                name: "May A5",
+                signalOk: true,
+                lastReport: Date.now()
+            },
+            "May A6": {
+                name: "May A6",
+                signalOk: true,
+                lastReport: Date.now()
+            },
+            "May A7": {
+                name: "May A7",
+                signalOk: true,
+                lastReport: Date.now()
+            },
+            "May A8": {
+                name: "May A8",
+                signalOk: true,
+                lastReport: Date.now()
+            },
+            "May A9": {
+                name: "May A9",
+                signalOk: true,
+                lastReport: Date.now()
+            },
+            "May A10": {
+                name: "May A10",
+                signalOk: true,
+                lastReport: Date.now()
+            },
+            "May A11": {
+                name: "May A11",
+                signalOk: true,
+                lastReport: Date.now()
+            },
+            "May A12": {
+                name: "May A12",
+                signalOk: true,
+                lastReport: Date.now()
+            },
+            "May A13": {
+                name: "May A13",
+                signalOk: true,
+                lastReport: Date.now()
+            },
+            "May A14": {
+                name: "May A14",
+                signalOk: true,
+                lastReport: Date.now()
+            },
+            "May A15": {
+                name: "May A15",
+                signalOk: true,
+                lastReport: Date.now()
+            }
+
+        };
+
+        // Nhận diện nền tảng (iOS / Android / Máy tính)
+        function detectPlatform() {
+            const ua = navigator.userAgent || "";
+            const isIOS = /iPad|iPhone|iPod/.test(ua) || (navigator.platform === "MacIntel" && navigator.maxTouchPoints > 1);
+            const isAndroid = /Android/i.test(ua);
+            const badge = document.getElementById("deviceBadge");
+
+            if (isIOS) badge.textContent = "Thiết bị: iOS";
+            else if (isAndroid) badge.textContent = "Thiết bị: Android";
+            else badge.textContent = "Thiết bị: Máy tính";
+
+            // Chỉ hiện nút USB Serial trên trình duyệt máy tính có hỗ trợ
+            if ("serial" in navigator && !isIOS && !isAndroid) {
+                document.getElementById("serialBtn").style.display = "block";
+            }
+        }
+
+        function unlockAudio() {
+            try {
+                audioCtx = audioCtx || new(window.AudioContext || window.webkitAudioContext)();
+                if (audioCtx.state === "suspended") audioCtx.resume();
+                playAlertFeedback(true);
+                addLog("Đã kích hoạt âm thanh cảnh báo.");
+            } catch (e) {}
+        }
+
+        function playAlertFeedback(testOnly = false) {
+            if (document.getElementById("vibrateToggle").checked && "vibrate" in navigator) {
+                navigator.vibrate(testOnly ? [100] : [300, 150, 300, 150, 400]);
+            }
+
+            if (!document.getElementById("soundToggle").checked) return;
+            try {
+                audioCtx = audioCtx || new(window.AudioContext || window.webkitAudioContext)();
+                if (audioCtx.state === "suspended") audioCtx.resume();
+
+                const osc = audioCtx.createOscillator();
+                const gain = audioCtx.createGain();
+                osc.type = "triangle";
+                osc.frequency.value = testOnly ? 660 : 920;
+                gain.gain.value = 0.14;
+                osc.connect(gain);
+                gain.connect(audioCtx.destination);
+                osc.start();
+                osc.stop(audioCtx.currentTime + (testOnly ? 0.12 : 0.35));
+            } catch (e) {}
+        }
+
+        function addLog(text) {
+            const logBox = document.getElementById("logBox");
+            const time = new Date().toLocaleTimeString("vi-VN");
+            const div = document.createElement("div");
+            div.textContent = `[${time}] ${text}`;
+            logBox.prepend(div);
+        }
+
+        function clearLogs() {
+            document.getElementById("logBox").innerHTML = "";
+        }
+
+        function receiveReportFromRemote(status, machineId = null, machineName = null) {
+            const id = machineId || document.getElementById("machineSelect").value;
+            if (!machines[id]) {
+                machines[id] = {
+                    name: machineName || id,
+                    signalOk: true,
+                    lastReport: Date.now()
+                };
+            }
+
+            const m = machines[id];
+            m.lastReport = Date.now();
+            const nextOk = (String(status).trim().toUpperCase() === "OK");
+
+            if (m.signalOk !== nextOk) {
+                m.signalOk = nextOk;
+                if (!nextOk) {
+                    addLog(`${m.name} báo MẤT TÍN HIỆU!`);
+                    playAlertFeedback(false);
+                } else {
+                    addLog(`${m.name} báo ĐÃ CÓ TÍN HIỆU trở lại.`);
+                }
+            }
+            render();
+        }
+
+        async function fetchServerStatus() {
+            const url = document.getElementById("apiUrlInput").value.trim();
+            if (!url) return;
+
+            try {
+                const res = await fetch(url, {
+                    cache: "no-store"
+                });
+                const data = await res.json();
+                document.getElementById("connBadge").textContent = "Online (API)";
+
+                const list = Array.isArray(data) ? data : [data];
+                list.forEach((item) => {
+                    if (item && item.machineId && item.status) {
+                        receiveReportFromRemote(item.status, item.machineId, item.name);
+                    }
+                });
+            } catch (err) {
+                document.getElementById("connBadge").textContent = "Lỗi kết nối API";
+            }
+        }
+
+        function toggleApiPolling() {
+            const btn = document.getElementById("apiBtn");
+            const url = document.getElementById("apiUrlInput").value.trim();
+
+            if (pollTimer) {
+                clearInterval(pollTimer);
+                pollTimer = null;
+                btn.textContent = "Bật nhận dữ liệu từ Server";
+                document.getElementById("connBadge").textContent = "Đã ngắt kết nối";
+                addLog("Đã dừng nhận dữ liệu từ Server.");
+                return;
+            }
+
+            if (!url) {
+                alert("Vui lòng nhập đường dẫn API máy chủ trước.");
+                return;
+            }
+
+            localStorage.setItem("signal_api_url", url);
+            unlockAudio();
+            fetchServerStatus();
+            pollTimer = setInterval(fetchServerStatus, 3000);
+            btn.textContent = "Đang nhận dữ liệu (Bấm để dừng)";
+            addLog("Kết nối tới: " + url);
+        }
+
+        // Kết nối cổng USB Serial trên máy tính (Arduino / ESP32)
+        async function connectSerialPort() {
+            try {
+                const port = await navigator.serial.requestPort();
+                await port.open({
+                    baudRate: 9600
+                });
+                document.getElementById("connBadge").textContent = "Online (USB Serial)";
+                addLog("Đã kết nối cổng USB Serial.");
+
+                const decoder = new TextDecoderStream();
+                port.readable.pipeTo(decoder.writable);
+                const reader = decoder.readable.getReader();
+
+                let buffer = "";
+                while (true) {
+                    const {
+                        value,
+                        done
+                    } = await reader.read();
+                    if (done) break;
+                    buffer += value;
+                    const lines = buffer.split("\n");
+                    buffer = lines.pop();
+                    for (const line of lines) {
+                        const [id, status] = line.trim().split(":");
+                        if (id && status) {
+                            receiveReportFromRemote(status, id);
+                        }
+                    }
+                }
+            } catch (e) {
+                addLog("Không thể mở cổng Serial: " + e.message);
+            }
+        }
+
+        // Giám sát quá hạn heartbeat
+        setInterval(() => {
+            const now = Date.now();
+            let changed = false;
+            Object.values(machines).forEach((m) => {
+                if (m.signalOk && (now - m.lastReport > TIMEOUT_MS)) {
+                    m.signalOk = false;
+                    changed = true;
+                    addLog(`${m.name} quá ${TIMEOUT_MS / 1000}s không gửi báo cáo -> MẤT TÍN HIỆU!`);
+                    playAlertFeedback(false);
+                }
+            });
+            if (changed) render();
+        }, 1000);
+
+        function render() {
+            const lostMachines = Object.values(machines).filter(m => !m.signalOk);
+            const anyLost = lostMachines.length > 0;
+
+            const mainLed = document.getElementById("mainLed");
+            const mainTitle = document.getElementById("mainTitle");
+            const mainSub = document.getElementById("mainSub");
+            const banner = document.getElementById("alertBanner");
+
+            if (anyLost) {
+                mainLed.className = "led red-blink";
+                mainTitle.textContent = `MẤT TÍN HIỆU (${lostMachines.length} MÁY)`;
+                mainSub.textContent = "Đèn đỏ nháy liên tục — có máy nơi khác báo mất tín hiệu.";
+                banner.textContent = "CẢNH BÁO: " + lostMachines.map(m => m.name).join(", ") + " đang MẤT TÍN HIỆU!";
+                banner.classList.add("active");
+                document.title = `(!) MẤT TÍN HIỆU (${lostMachines.length})`;
+            } else {
+                mainLed.className = "led green";
+                mainTitle.textContent = "ĐÃ CÓ TÍN HIỆU";
+                mainSub.textContent = "Tất cả máy nơi khác đều có tín hiệu ổn định.";
+                banner.classList.remove("active");
+                document.title = "Giám Sát Tín Hiệu Đa Thiết Bị";
+            }
+
+            const listEl = document.getElementById("machineList");
+            listEl.innerHTML = "";
+            Object.values(machines).forEach((m) => {
+                const card = document.createElement("div");
+                card.className = "machine-card" + (m.signalOk ? "" : " lost");
+                card.innerHTML = `
+          <div>
+            <div style="font-weight:700;font-size:14px;">${m.name}</div>
+            <div style="font-size:12px;color:${m.signalOk ? "#86efac" : "#fca5a5"};">
+              ${m.signalOk ? "Đã có tín hiệu" : "Mất tín hiệu"}
+            </div>
+          </div>
+          <div class="mini-led ${m.signalOk ? "green" : "red-blink"}"></div>
+        `;
+                listEl.appendChild(card);
+            });
+        }
+
+        // Đăng ký Service Worker để chạy như ứng dụng độc lập
+        if ("serviceWorker" in navigator) {
+            navigator.serviceWorker.register("./sw.js").catch(() => {});
+        }
+
+        const savedUrl = localStorage.getItem("signal_api_url");
+        if (savedUrl) {
+            document.getElementById("apiUrlInput").value = savedUrl;
+        }
+
+        detectPlatform();
+        addLog("Hệ thống sẵn sàng hoạt động.");
+        render();
+    </script>
+</body>
+
+</html>
